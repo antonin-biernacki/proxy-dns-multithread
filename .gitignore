@@ -1,0 +1,6 @@
+bin/
+libs/static/
+*.o
+*.so
+*.a
+logs*.txt
