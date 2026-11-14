@@ -16,7 +16,7 @@ Serveur mandataire DNS (proxy) écrit en C pour Linux : il reçoit les requêtes
 
 - Sockets UDP (`socket`, `bind`, `recvfrom`, `sendto`) et format des paquets DNS (RFC 1035)
 - Threads POSIX : un thread par requête, plus un thread de log
-- Mémoire partagée entre threads, protégée par un mutex et une variable de condition
+- Mémoire partagée entre threads (tampon circulaire), protégée par un mutex et une variable de condition
 - Bibliothèque statique (`libreseau.a`) et bibliothèques dynamiques (`.so`)
 - Chargement de plugins à l'exécution avec `dlopen` / `dlsym` (patron de conception *stratégie*)
 - Options en ligne de commande avec `getopt_long`
@@ -40,7 +40,7 @@ flowchart LR
 
 1. Le thread principal attend les requêtes sur le port d'écoute (53 par défaut).
 2. Pour chaque requête reçue, il lance un thread détaché (`launchThread`). Ce thread envoie la question au serveur DNS, attend la réponse (3 s au maximum) et la renvoie au client.
-3. En parallèle, le paquet est copié dans la mémoire partagée. Chaque message y est précédé de sa taille, ce qui permet au lecteur de les récupérer un par un.
+3. En parallèle, le paquet est copié dans la mémoire partagée, un tampon circulaire de 1 Ko. Chaque message y est précédé de sa taille, ce qui permet au lecteur de les récupérer un par un. Si le tampon est plein parce que le thread de log a pris du retard, le paquet n'est pas journalisé, mais la requête est quand même relayée.
 4. Le thread de log attend sans consommer de CPU qu'un message arrive, puis le transmet à la stratégie chargée.
 
 ### Organisation du code
